@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lkw.mapper.IUserInfoMapper">
+    <!--创建一对多映射-->
+    <resultMap id="userInfoMap" type="com.lkw.pojo.UserInfo">
+        <id property="userId" column="userId"></id>
+        <result property="username" column="username"></result>
+        <result property="password" column="password"></result>
+        <result property="name" column="name"></result>
+        <result property="email" column="email"></result>
+        <result property="status" column="status"></result>
+        <collection property="roleInfos" ofType="com.lkw.pojo.RoleInfo">
+            <id property="roleid" column="roleid"></id>
+            <result property="rolename" column="rolename"></result>
+        </collection>
+    </resultMap>
+
+    <select id="findUserInfoById" parameterType="int" resultType="com.lkw.pojo.UserInfo">
+        select * from userinfo where userid = #{id}
+    </select>
+
+    <select id="loginCheck" parameterType="com.lkw.pojo.UserInfo" resultType="com.lkw.pojo.UserInfo">
+        SELECT * from userinfo where status = 1 and username = #{username} and password = #{password}
+    </select>
+
+    <insert id="addUserInfo" parameterType="com.lkw.pojo.UserInfo">
+        INSERT INTO userinfo values(DEFAULT ,#{username},#{password},#{name},#{email},#{status})
+    </insert>
+
+    <update id="updateUserInfo" parameterType="com.lkw.pojo.UserInfo">
+        update userinfo
+        <trim prefix="set" suffixOverrides=",">
+            <if test="username != null and username != '' ">
+                username = #{username},
+            </if>
+            <if test="password != null and password != '' ">
+                password = #{password},
+            </if>
+            <if test="name != null and name != '' ">
+                name = #{name},
+            </if>
+            <if test="email != null and email != '' ">
+                email = #{email}
+            </if>
+            where userid = #{userId}
+        </trim>
+    </update>
+
+    <update id="deleteUserInfo" parameterType="com.lkw.pojo.UserInfo">
+        update userinfo set status = 0 where userid = #{userId}
+    </update>
+
+    <select id="selectByPaging" parameterType="map" resultType="com.lkw.pojo.UserInfo">
+        select * from userinfo where status = 1 limit #{currentPage},#{pageSize}
+    </select>
+
+    <select id="getUserInfoBy" parameterType="com.lkw.pojo.UserInfo" resultType="com.lkw.pojo.UserInfo">
+        select * from userinfo where status = 1
+        <if test="userId != null and userId != '' ">
+            and userId = #{userId}
+        </if>
+        <if test="username != null and username != '' ">
+            and username = #{username}
+        </if>
+        <if test="password != null and password != '' ">
+            and password = #{password}
+        </if>
+        <if test="name != null and name != '' ">
+            and name = #{name}
+        </if>
+        <if test="email != null and email != '' ">
+            and email = #{email}
+        </if>
+    </select>
+
+    <select id="getCount" resultType="int" parameterType="com.lkw.vo.UserInfoVo">
+        select count(*) from userinfo where status = 1
+        <if test="username!=null and username !=''">
+            and username = #{username}
+        </if>
+        <if test="name!=null and name !=''">
+            and name = #{name}
+        </if>
+        <if test="email!=null and email !=''">
+            and email = #{email}
+        </if>
+    </select>
+
+    <select id="getUserInfosPageBy" parameterType="com.lkw.vo.UserInfoVo" resultType="com.lkw.pojo.UserInfo">
+        SELECT * from userinfo where status = 1
+        <if test="username!=null and username !=''">
+            and username = #{username}
+        </if>
+        <if test="name!=null and name !=''">
+            and name = #{name}
+        </if>
+        <if test="email!=null and email !=''">
+            and email = #{email}
+        </if>
+        limit #{page.start},#{page.pageSize}
+    </select>
+
+    <update id="batchDel" parameterType="com.lkw.vo.UserInfoVo">
+        update userinfo set status = 0 where userId in
+        <foreach collection="ids" item="id" index="index" open="(" close=")" separator="," >
+            #{id}
+        </foreach>
+    </update>
+
+    <delete id="clearStatus" parameterType="com.lkw.vo.UserRoleVo">
+        delete from user_role where userid = #{userId}
+    </delete>
+
+    <insert id="updateStatus" parameterType="com.lkw.vo.UserRoleVo">
+        insert into user_role(userid,roleid) values
+        <foreach collection="roleIds" item="item" index="index" separator=",">
+            (#{userId},#{item})
+        </foreach>
+    </insert>
+
+    <select id="getMenuByUserId" parameterType="int" resultType="com.lkw.pojo.MenuInfo">
+        select m.* from userinfo u,user_role ur,roleinfo r
+,role_menuinfo rm ,menuinfo m
+where u.userid = #{userId} and u.userid = ur.userid and ur.roleid = r.roleid
+and r.roleid = rm.roleid and rm.status = 1 and rm.menuid = m.menuid
+GROUP BY m.menuid
+
+
+    </select>
+
+</mapper>
